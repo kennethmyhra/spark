@@ -55,10 +55,11 @@ namespace Spark.Engine.Service.FhirServiceExtensions
         protected virtual IFhirServiceExtension GetPaging()
         {
             IFhirStore fhirStore = fhirStoreBuilder.GetStore<IFhirStore>();
+            IFhirIndex fhirIndex = fhirStoreBuilder.GetStore<IFhirIndex>();
             ISnapshotStore snapshotStore = fhirStoreBuilder.GetStore<ISnapshotStore>();
             IGenerator storeGenerator = fhirStoreBuilder.GetStore<IGenerator>();
             if (fhirStore != null)
-                return new PagingService(snapshotStore, new SnapshotPaginationProvider(fhirStore, new Transfer(storeGenerator, new Localhost(baseUri)), new Localhost(baseUri), new SnapshotPaginationCalculator()));
+                return new PagingService(snapshotStore, new SnapshotPaginationProvider(fhirStore, fhirIndex, new Transfer(storeGenerator, new Localhost(baseUri)), new Localhost(baseUri), new SnapshotPaginationCalculator()));
             return null;
         }
 

@@ -13,14 +13,16 @@ namespace Spark.Engine.Service.FhirServiceExtensions
     public class SnapshotPaginationProvider : ISnapshotPaginationProvider, ISnapshotPagination
     {
         private IFhirStore fhirStore;
+        private IFhirIndex fhirIndex;
         private readonly ITransfer transfer;
         private readonly ILocalhost localhost;
         private readonly ISnapshotPaginationCalculator _snapshotPaginationCalculator;
         private Snapshot snapshot;
      
-        public SnapshotPaginationProvider(IFhirStore fhirStore, ITransfer transfer, ILocalhost localhost, ISnapshotPaginationCalculator snapshotPaginationCalculator)
+        public SnapshotPaginationProvider(IFhirStore fhirStore, IFhirIndex fhirIndex, ITransfer transfer, ILocalhost localhost, ISnapshotPaginationCalculator snapshotPaginationCalculator)
         {
             this.fhirStore = fhirStore;
+            this.fhirIndex = fhirIndex;
             this.transfer = transfer;
             this.localhost = localhost;
             _snapshotPaginationCalculator = snapshotPaginationCalculator;
@@ -51,7 +53,6 @@ namespace Spark.Engine.Service.FhirServiceExtensions
         {
             Bundle bundle = new Bundle();
             bundle.Type = snapshot.Type;
-            bundle.Total = snapshot.Count;
             bundle.Id = UriHelper.CreateUuid().ToString();
 
             List<IKey> keys = _snapshotPaginationCalculator.GetKeysForPage(snapshot, start).ToList();
@@ -64,14 +65,29 @@ namespace Spark.Engine.Service.FhirServiceExtensions
             }
             IList<Entry> included = GetIncludesRecursiveFor(entries, snapshot.Includes);
             entries.Append(included);
+            IList<Entry> revIncluded = GetReversIncludes(keys, snapshot.ReverseIncludes);
+            entries.Append(revIncluded);
 
             transfer.Externalize(entries);
             bundle.Append(entries);
+            bundle.Total = entries.Count;
             BuildLinks(bundle, start);
 
             return bundle;
         }
 
+        private IList<Entry> GetReversIncludes(IList<IKey> keys, IList<string> reverseIncludes)
+        {
+            IList<Entry> entries = new List<Entry>();
+            SearchResults results = fhirIndex.GetReverseIncludes(keys, reverseIncludes);
+            foreach(string result in results)
+            {
+                Entry entry = fhirStore.Get(Key.ParseOperationPath(result));
+                if (entry != null) entries.Add(entry);
+            }
+
+            return entries;
+        }
 
         private IList<Entry> GetIncludesRecursiveFor(IList<Entry> entries, IEnumerable<string> includes)
         {

@@ -31,7 +31,7 @@ namespace Spark.Engine.Core
         public DateTimeOffset WhenCreated;
         public string SortBy { get; set; }
         public ICollection<string> Includes;
-        public ICollection<string> ReverseIncludes;
+        public IList<string> ReverseIncludes;
 
         public static Snapshot Create(Bundle.BundleType type, Uri selflink, IEnumerable<string> keys, string sortby, int? count, IList<string> includes, IList<string> reverseIncludes)
         {
