@@ -144,8 +144,11 @@ namespace Spark.Controllers
         [HttpPost, HttpGet, Route("{type}/_search")]
         public FhirResponse SearchWithOperator(string type)
         {
-            // todo: get tupled parameters from post.
-            return Search(type);
+            // TODO: start index should be retrieved from the body.
+            int start = Request.GetIntParameter(FhirParameter.SNAPSHOT_INDEX) ?? 0;
+            SearchParams searchparams = Request.GetSearchParamsFromBody();
+
+            return _fhirService.Search(type, searchparams, start);
         }
 
         [HttpGet, Route("{type}/_history")]

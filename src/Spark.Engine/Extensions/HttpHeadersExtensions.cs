@@ -89,6 +89,20 @@ namespace Spark.Engine.Extensions
             var searchCommand = SearchParams.FromUriParamList(parameters);
             return searchCommand;
         }
+
+        public static SearchParams GetSearchParamsFromBody(this HttpRequestMessage request)
+        {
+            var list = new List<Tuple<string, string>>();
+            string content = request.Content.ReadAsStringAsync().Result;
+            string[] parameters = string.IsNullOrEmpty(content) ? null : content.Split('&');
+            foreach (string parameter in parameters)
+            {
+                string[] p = parameter.Split('=');
+                list.Add(new Tuple<string, string>(p[0], p[1]));
+            }
+
+            return SearchParams.FromUriParamList(list);
+        }
     }
 
     public static class FhirHttpHeaders
