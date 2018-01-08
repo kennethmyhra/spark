@@ -7,6 +7,9 @@ using Spark.Handlers;
 using Spark.Formatters;
 using Spark.Core;
 using Spark.Engine.ExceptionHandling;
+using Lib.Net.Http.EncryptedContentEncoding;
+using System.Collections.Generic;
+using System;
 
 namespace Spark.Engine.Extensions
 {
@@ -39,6 +42,15 @@ namespace Spark.Engine.Extensions
         {
             // TODO: Should compression handler be before InterceptBodyHandler.  Have not checked.
             config.MessageHandlers.Add((new CompressionHandler()));
+            //config.MessageHandlers.Add(new DecryptionHandler());
+
+            IDictionary<string, byte[]> keys = new Dictionary<string, byte[]>
+                {
+                    { string.Empty, Convert.FromBase64String("yqdlZ+tYemfogSmv7Ws5PQ==") },
+                    { "a1", Convert.FromBase64String("BO3ZVPxUlnLORbVGMpbT1Q==") }
+                };
+            Func<string, byte[]> keyLocator = (keyId) => keys[keyId ?? String.Empty];
+            config.MessageHandlers.Add(new Aes128GcmEncodingHandler(keyLocator));
             config.MessageHandlers.Add(new FhirMediaTypeHandler());
             config.MessageHandlers.Add(new FhirResponseHandler());
             config.MessageHandlers.Add(new FhirErrorMessageHandler());

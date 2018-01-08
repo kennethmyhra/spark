@@ -73,31 +73,17 @@ namespace Spark.Filters
             {
                 var encoding = request.Content.Headers.ContentEncoding.First();
                 Func<HttpContent, HttpContent> decompressor;
-                if (!decompressors.TryGetValue(encoding, out decompressor))
+                if (decompressors.TryGetValue(encoding, out decompressor))
                 {
-                    var outcome = new OperationOutcome
+                    try
                     {
-                        Issue = new List<OperationOutcome.IssueComponent>()
+                        request.Content = decompressor(request.Content);
+                    }
+                    catch (ArgumentOutOfRangeException ex)
+                    {
+                        var outcome = new OperationOutcome
                         {
-                            new OperationOutcome.IssueComponent
-                            {
-                                Code = OperationOutcome.IssueType.NotSupported,
-                                Details = new CodeableConcept("http://hl7.org/fhir/ValueSet/operation-outcome", "MSG_BAD_FORMAT", string.Format("The Content-Encoding '{0}' is not supported.", encoding)),
-                                Severity = OperationOutcome.IssueSeverity.Error
-                            }
-                        }
-                    };
-                    throw new HttpResponseException(request.CreateResponse(HttpStatusCode.BadRequest, outcome));
-                }
-                try
-                {
-                    request.Content = decompressor(request.Content);
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    var outcome = new OperationOutcome
-                    {
-                        Issue = new List<OperationOutcome.IssueComponent>()
+                            Issue = new List<OperationOutcome.IssueComponent>()
                         {
                             new OperationOutcome.IssueComponent()
                             {
@@ -106,8 +92,9 @@ namespace Spark.Filters
                                 Severity = OperationOutcome.IssueSeverity.Error
                             }
                         }
-                    };
-                    throw new HttpResponseException(request.CreateResponse(HttpStatusCode.Forbidden, outcome));
+                        };
+                        throw new HttpResponseException(request.CreateResponse(HttpStatusCode.Forbidden, outcome));
+                    }
                 }
             }
 
