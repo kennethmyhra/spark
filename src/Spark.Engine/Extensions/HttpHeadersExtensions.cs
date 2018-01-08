@@ -93,7 +93,7 @@ namespace Spark.Engine.Extensions
         public static SearchParams GetSearchParamsFromBody(this HttpRequestMessage request)
         {
             var list = new List<Tuple<string, string>>();
-            string content = request.Content.ReadAsStringAsync().Result;
+            string content = Uri.UnescapeDataString(request.Content.ReadAsStringAsync().Result);
             string[] parameters = string.IsNullOrEmpty(content) ? null : content.Split('&');
             foreach (string parameter in parameters)
             {
