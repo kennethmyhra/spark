@@ -14,6 +14,7 @@ using System.Web.Http.Cors;
 using Hl7.Fhir.Rest;
 using Spark.Core;
 using Spark.Infrastructure;
+using Swashbuckle.Swagger.Annotations;
 
 namespace Spark.Controllers
 {
@@ -29,7 +30,10 @@ namespace Spark.Controllers
             // This will be a (injected) constructor parameter in ASP.vNext.
             _fhirService = fhirService;
         }
-
+      
+        [SwaggerResponse(HttpStatusCode.OK, Type = typeof(FhirResponse))]
+        [SwaggerResponse(HttpStatusCode.NotFound)]
+        [SwaggerResponse(HttpStatusCode.Gone)]
         [HttpGet, Route("{type}/{id}")]
         public FhirResponse Read(string type, string id)
         {
@@ -39,7 +43,9 @@ namespace Spark.Controllers
 
             return response;
         }
-
+        [SwaggerResponse(HttpStatusCode.OK, Type = typeof(FhirResponse))]
+        [SwaggerResponse(HttpStatusCode.NotFound)]
+        [SwaggerResponse(HttpStatusCode.Gone)]
         [HttpGet, Route("{type}/{id}/_history/{vid}")]
         public FhirResponse VRead(string type, string id, string vid)
         {
@@ -47,6 +53,12 @@ namespace Spark.Controllers
             return _fhirService.VersionRead(key);
         }
 
+        [SwaggerResponse(HttpStatusCode.OK)]
+        [SwaggerResponse(HttpStatusCode.Created)]
+        [SwaggerResponse(HttpStatusCode.BadRequest)]
+        [SwaggerResponse(HttpStatusCode.NotFound)]
+        [SwaggerResponse(412, "Multiple Matches")]
+        [SwaggerResponse(422, "Unprocessable Entity")]
         [HttpPut, Route("{type}/{id?}")]
         public FhirResponse Update(string type, Resource resource, string id = null)
         {
@@ -63,6 +75,10 @@ namespace Spark.Controllers
             }
         }
 
+        [SwaggerResponse(HttpStatusCode.Created, Type = typeof(FhirResponse), Description = "Den nylig opprettede ressursen med verdier satt av serveren for id, meta.versionId, meta.lastUpdated er inkludert i responsen")]
+        [SwaggerResponse(HttpStatusCode.BadRequest)]
+        [SwaggerResponse(HttpStatusCode.NotFound)]
+        [SwaggerResponse(422, "Unprocessable Entity")]
         [HttpPost, Route("{type}")]
         public FhirResponse Create(string type, Resource resource)
         {
@@ -86,6 +102,9 @@ namespace Spark.Controllers
             return _fhirService.Create(key, resource);
         }
 
+        [SwaggerResponse(HttpStatusCode.OK, Type = typeof(FhirResponse))]
+        [SwaggerResponse(HttpStatusCode.NotFound)]
+        [SwaggerResponse(HttpStatusCode.Gone)]
         [HttpDelete, Route("{type}/{id}")]
         public FhirResponse Delete(string type, string id)
 
@@ -95,6 +114,9 @@ namespace Spark.Controllers
             return response;
         }
 
+        [SwaggerResponse(HttpStatusCode.NotFound)]
+        [SwaggerResponse(HttpStatusCode.OK)]
+        [SwaggerResponse(412, "Multiple Matches")]
         [HttpDelete, Route("{type}")]
         public FhirResponse ConditionalDelete(string type)
         {
@@ -102,6 +124,9 @@ namespace Spark.Controllers
             return _fhirService.ConditionalDelete(key, Request.TupledParameters());
         }
 
+        [SwaggerResponse(HttpStatusCode.OK, Type = typeof(FhirResponse))]
+        [SwaggerResponse(HttpStatusCode.NotFound)]
+        [SwaggerResponse(HttpStatusCode.Gone)]
         [HttpGet, Route("{type}/{id}/_history")]
         public FhirResponse History(string type, string id)
         {
@@ -129,7 +154,9 @@ namespace Spark.Controllers
         }
 
         // ============= Type Level Interactions
-
+        [SwaggerResponse(HttpStatusCode.OK, Type = typeof(FhirResponse))]
+        [SwaggerResponse(HttpStatusCode.BadRequest)]
+        [SwaggerResponse(HttpStatusCode.NotFound)]
         [HttpGet, Route("{type}")]
         public FhirResponse Search(string type)
         {
@@ -140,7 +167,9 @@ namespace Spark.Controllers
 
             return _fhirService.Search(type, searchparams, start);
         }
-
+        [SwaggerResponse(HttpStatusCode.OK, Type = typeof(FhirResponse))]
+        [SwaggerResponse(HttpStatusCode.BadRequest)]
+        [SwaggerResponse(HttpStatusCode.NotFound)]
         [HttpPost, HttpGet, Route("{type}/_search")]
         public FhirResponse SearchWithOperator(string type)
         {
