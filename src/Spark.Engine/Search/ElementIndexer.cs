@@ -72,6 +72,31 @@ namespace Spark.Engine.Search
             return result;
         }
 
+        private List<Expression> ToExpressions(Timing element)
+        {
+            return null;
+        }
+
+        private List<Expression> ToExpressions(Location.PositionComponent element)
+        {
+            return null;
+        }
+
+        private List<Expression> ToExpressions(Location element)
+        {
+            return null;
+        }
+
+        private List<Expression> ToExpressions(Base64Binary element)
+        {
+            return null;
+        }
+
+        private List<Expression> ToExpressions(Attachment element)
+        {
+            return null;
+        }
+
         private List<Expression> ToExpressions(Markdown element)
         {
             if (element == null || String.IsNullOrWhiteSpace(element.Value))
