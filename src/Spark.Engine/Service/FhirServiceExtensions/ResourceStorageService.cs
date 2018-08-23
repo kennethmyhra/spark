@@ -42,7 +42,13 @@ namespace Spark.Engine.Service.FhirServiceExtensions
             }
             else
             {
-                result = fhirStore.Get(entry.Key);
+                // TODO: The below do-while block is not intended as a permanent fix.
+                // It currently solves an issue where an entry is not immediately 
+                // replicated between multiple MongoDB instances.
+                do
+                {
+                    result = fhirStore.Get(entry.Key);
+                } while (result == null);
             }
             transfer.Externalize(result);
 
