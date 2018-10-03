@@ -23,6 +23,7 @@ namespace Spark.Engine.Service.FhirServiceExtensions
         {
             string vsn = Hl7.Fhir.Model.ModelInfo.Version;
             CapabilityStatement capabilityStatement = CreateServer("Spark", sparkVersion, "Furore", fhirVersion: vsn);
+            capabilityStatement.AddOAuthSecurityComponent(capabilityStatement.Server());
 
             capabilityStatement.AddAllCoreResources(readhistory: true, updatecreate: true, versioning: CapabilityStatement.ResourceVersionPolicy.VersionedUpdate);
             capabilityStatement.AddAllSystemInteractions().AddAllInteractionsForAllResources().AddCoreSearchParamsAllResources();
@@ -35,6 +36,52 @@ namespace Spark.Engine.Service.FhirServiceExtensions
             capabilityStatement.Format = new string[] { "xml", "json" };
             capabilityStatement.Description = new Markdown("This FHIR SERVER is a reference Implementation server built in C# on HL7.Fhir.Core (nuget) by Furore and others");
 
+            return capabilityStatement;
+        }
+
+        public static CapabilityStatement AddOAuthSecurityComponent(this CapabilityStatement capabilityStatement, CapabilityStatement.RestComponent restComponent)
+        {
+            // Create OAuth Uris
+            restComponent.Security = new CapabilityStatement.SecurityComponent
+            {
+                Extension = new List<Extension>
+                {
+                    new Extension
+                    {
+                        Url = "http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris",
+                        Extension = new List<Extension>
+                        {
+                            new Extension
+                            {
+                                Url = "authorize",
+                                Value = new FhirUri("https://smart-auth.azurewebsites.net/connect/authorize")
+                            },
+                            new Extension
+                            {
+                                Url = "token",
+                                Value = new FhirUri("https://smart-auth.azurewebsites.net/connect/token")
+                            }
+                        }
+                    }
+                },
+                Service = new List<CodeableConcept>
+                {
+                    new CodeableConcept
+                    {
+                        Coding = new List<Coding>
+                        {
+                            new Coding
+                            {
+                                System = "http://hl7.org/fhir/restful-security-service",
+                                Code = "SMART-on-FHIR",
+                                Display = "SMART-on-FHIR"
+                            }
+                        },
+                        Text = "OAuth2 using SMART-on-FHIR profile (see http://docs.smarthealthit.org)"
+                    }
+                }
+            };
+            
             return capabilityStatement;
         }
 
