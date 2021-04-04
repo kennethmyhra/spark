@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using Spark.Core;
 using Spark.Engine.Extensions;
 using Task = System.Threading.Tasks.Task;
 
