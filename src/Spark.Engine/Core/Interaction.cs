@@ -105,6 +105,11 @@ namespace Spark.Engine.Core
             return new Entry(method, key, null, resource);
         }
 
+        public static Entry Create(Bundle.HTTPVerb method, IKey key, Resource resource, DateTimeOffset when)
+        {
+            return new Entry(method, key, when, resource);
+        }
+
         public static Entry Create(IKey key, Resource resource)
         {
             return new Entry(key, resource);
