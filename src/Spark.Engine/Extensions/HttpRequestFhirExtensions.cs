@@ -1,24 +1,24 @@
-﻿/* 
+﻿/*
  * Copyright (c) 2014-2018, Firely <info@fire.ly>
  * Copyright (c) 2018-2025, Incendi <info@incendi.no>
- * 
+ *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
+using Hl7.Fhir.Utility;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http.Headers;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Primitives;
+using Spark.Engine.Core;
+using Spark.Engine.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.Fhir.Model;
-using Spark.Engine.Core;
-using Hl7.Fhir.Rest;
-using Hl7.Fhir.Utility;
-using Spark.Engine.Utility;
 using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Http.Headers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 
 [assembly: InternalsVisibleTo("Spark.Engine.Test")]
 namespace Spark.Engine.Extensions;
@@ -83,6 +83,24 @@ public static class HttpRequestFhirExtensions
     {
         request.Query.TryGetValue("_summary", out StringValues stringValues);
         return GetSummary(stringValues.FirstOrDefault());
+    }
+
+    public static ReturnPreference GetPreferHeaderValue(this HttpRequest request)
+    {
+        StringValues stringValues = request.Headers["Prefer"];
+        return ParsePreferHeaderValue(stringValues.FirstOrDefault());
+    }
+
+    private static ReturnPreference ParsePreferHeaderValue(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || !value.StartsWith("return="))
+            return ReturnPreference.Representation;
+
+        int index = value.LastIndexOf('=');
+        if (index == -1) return ReturnPreference.Representation;
+
+        return EnumUtility.ParseLiteral<ReturnPreference>(value[(index + 1)..], true) ??
+               ReturnPreference.Representation;
     }
 
     /// <summary>
