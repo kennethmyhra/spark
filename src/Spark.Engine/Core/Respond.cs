@@ -23,17 +23,17 @@ public static class Respond
 
     public static FhirResponse WithCode(HttpStatusCode code)
     {
-        return new FhirResponse(code, null);
+        return new FhirResponse(code);
     }
 
     public static FhirResponse WithCode(int code)
     {
-        return new FhirResponse((HttpStatusCode)code, null);
+        return new FhirResponse((HttpStatusCode)code);
     }
 
     public static FhirResponse WithError(HttpStatusCode code, string message, params object[] args)
     {
-        OperationOutcome outcome = new OperationOutcome();
+        OperationOutcome outcome = new();
         outcome.AddError(string.Format(message, args));
         return new FhirResponse(code, outcome);
     }
@@ -71,28 +71,22 @@ public static class Respond
 
     public static FhirResponse WithBundle(IEnumerable<Entry> entries, Uri serviceBase)
     {
-        Bundle bundle = new Bundle();
+        Bundle bundle = new();
         bundle.Append(entries);
         return WithBundle(bundle);
     }
 
     public static FhirResponse WithMeta(Meta meta)
     {
-        Parameters parameters = new Parameters();
-        parameters.Add(typeof(Meta).Name, meta);
+        Parameters parameters = new() { { nameof(Meta), meta } };
         return WithResource(parameters);
     }
 
     public static FhirResponse WithMeta(Entry entry)
     {
-        if (entry.Resource != null && entry.Resource.Meta != null)
-        {
-            return WithMeta(entry.Resource.Meta);
-        }
-        else
-        {
-            return WithError(HttpStatusCode.InternalServerError, "Could not retrieve meta. Meta was not present on the resource");
-        }
+        return entry.Resource is { Meta: not null }
+            ? WithMeta(entry.Resource.Meta)
+            : WithError(HttpStatusCode.InternalServerError, "Could not retrieve meta. Meta was not present on the resource");
     }
 
     public static FhirResponse WithKey(HttpStatusCode code, IKey key)
@@ -112,14 +106,9 @@ public static class Respond
 
     public static FhirResponse NotFound(IKey key)
     {
-        if (key.VersionId == null)
-        {
-            return WithError(HttpStatusCode.NotFound, "No {0} resource with id {1} was found.", key.TypeName, key.ResourceId);
-        }
-        else
-        {
-            return WithError(HttpStatusCode.NotFound, "There is no {0} resource with id {1}, or there is no version {2}", key.TypeName, key.ResourceId, key.VersionId);
-        }
+        return key.VersionId == null
+            ? WithError(HttpStatusCode.NotFound, "No {0} resource with id {1} was found.", key.TypeName, key.ResourceId)
+            : WithError(HttpStatusCode.NotFound, "There is no {0} resource with id {1}, or there is no version {2}", key.TypeName, key.ResourceId, key.VersionId);
         // For security reasons (leakage): keep message in sync with Error.NotFound(key)
     }
 
