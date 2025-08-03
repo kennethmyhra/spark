@@ -16,11 +16,59 @@ namespace Spark.Engine.Core;
 // without having to implement functionality twice.
 // The FhirService always responds with a "Response"
 
-public class FhirResponse<T> where T : Resource
+public abstract class FhirResponseBase
 {
-    public HttpStatusCode StatusCode { get; }
-    public IKey Key { get; }
-    public T Resource { get; }
+    private static readonly Dictionary<HttpStatusCode, string> DIAGNOSTIC_TEXTS = new()
+    {
+        { HttpStatusCode.OK, "Successfully updated resource \"{resource}\"" },
+        { HttpStatusCode.Created, "Successfully created resource \"{resource}\"" }
+    };
+
+    protected Resource _resource;
+
+    protected static string BuildDiagnosticText(HttpStatusCode statusCode, IKey key)
+    {
+        if (key == null)
+            return null;
+
+        string relativeUrl = $"{key.TypeName}/{key.ResourceId}";
+        if (key.HasVersionId())
+            relativeUrl += $"/_history/{key.VersionId}";
+
+        return DIAGNOSTIC_TEXTS.TryGetValue(statusCode, out string value)
+            ? value.Replace("{resource}", relativeUrl)
+            : null;
+    }
+
+    public HttpStatusCode StatusCode { get; protected init; }
+    public IKey Key { get; protected init; }
+
+    public bool IsValid
+    {
+        get
+        {
+            int code = (int)StatusCode;
+            return code <= 300;
+        }
+    }
+
+    public bool HasBody => _resource != null;
+
+    public override string ToString()
+    {
+        string details = _resource != null ? $"({_resource.TypeName})" : null;
+        string location = Key?.ToString();
+        return $"{(int)StatusCode}: {StatusCode.ToString()} {details} ({location})";
+    }
+}
+
+public class FhirResponse<T> : FhirResponseBase where T : Resource
+{
+    public T Resource
+    {
+        get => _resource as T;
+        private init => _resource = value;
+    }
 
     public FhirResponse(HttpStatusCode code, IKey key, T resource)
     {
@@ -40,51 +88,15 @@ public class FhirResponse<T> where T : Resource
     {
         StatusCode = code;
     }
-
-    public bool IsValid
-    {
-        get
-        {
-            int code = (int)StatusCode;
-            return code <= 300;
-        }
-    }
-
-    public bool HasBody => Resource != null;
-
-    public override string ToString()
-    {
-        string details = Resource != null ? string.Format("({0})", Resource.TypeName) : null;
-        string location = Key?.ToString();
-        return string.Format("{0}: {1} {2} ({3})", (int)StatusCode, StatusCode.ToString(), details, location);
-    }
 }
 
-public class FhirResponse
+public class FhirResponse : FhirResponseBase
 {
-    private static readonly Dictionary<HttpStatusCode, string> DIAGNOSTIC_TEXTS = new()
+    public Resource Resource
     {
-        { HttpStatusCode.OK, "Successfully updated resource \"{resource}\"" },
-        { HttpStatusCode.Created, "Successfully created resource \"{resource}\"" },
-    };
-
-    private static string BuildDiagnosticText(HttpStatusCode statusCode, IKey key)
-    {
-        if (key == null)
-            return null;
-
-        var relativeUrl = $"{key.TypeName}/{key.ResourceId}";
-        if (key.HasVersionId())
-            relativeUrl += $"/_history/{key.VersionId}";
-
-        return DIAGNOSTIC_TEXTS.TryGetValue(statusCode, out string value)
-            ? value.Replace("{resource}", relativeUrl)
-            : null;
+        get => _resource;
+        private init => _resource = value;
     }
-
-    public HttpStatusCode StatusCode { get; }
-    public IKey Key { get; }
-    public Resource Resource { get; internal set; }
 
     public FhirResponse(HttpStatusCode code, IKey key, Resource resource)
     {
@@ -105,29 +117,5 @@ public class FhirResponse
         StatusCode = code;
         Key = null;
         Resource = null;
-    }
-
-    public bool IsValid
-    {
-        get
-        {
-            int code = (int)StatusCode;
-            return code <= 300;
-        }
-    }
-
-    public bool HasBody
-    {
-        get
-        {
-            return Resource != null;
-        }
-    }
-
-    public override string ToString()
-    {
-        string details = (Resource != null) ? string.Format("({0})", Resource.TypeName) : null;
-        string location = Key?.ToString();
-        return string.Format("{0}: {1} {2} ({3})", (int)StatusCode, StatusCode.ToString(), details, location);
     }
 }
