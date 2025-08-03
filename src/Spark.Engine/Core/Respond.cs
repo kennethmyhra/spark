@@ -6,6 +6,7 @@
  */
 
 using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -38,30 +39,44 @@ public static class Respond
         return new FhirResponse(code, outcome);
     }
 
-    public static FhirResponse WithResource(int code, Resource resource)
+    public static FhirResponse WithResource(
+        int code,
+        Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation)
     {
-        return new FhirResponse((HttpStatusCode)code, resource);
+        return new FhirResponse((HttpStatusCode)code, resource,  returnPreference);
     }
 
-    public static FhirResponse WithResource(Resource resource)
+    public static FhirResponse WithResource(
+        Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         return new FhirResponse(HttpStatusCode.OK, resource);
     }
 
-    public static FhirResponse WithResource(Key key, Resource resource)
+    public static FhirResponse WithResource(
+        Key key,
+        Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation)
     {
-        return new FhirResponse(HttpStatusCode.OK, key, resource);
+        return new FhirResponse(HttpStatusCode.OK, key, resource,  returnPreference);
     }
 
-    public static FhirResponse WithResource(HttpStatusCode code, Key key, Resource resource)
+    public static FhirResponse WithResource(
+        HttpStatusCode code,
+        Key key, Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation)
     {
-        return new FhirResponse(code, key, resource);
+        return new FhirResponse(code, key, resource, returnPreference);
     }
 
-    public static FhirResponse WithEntry(HttpStatusCode code, Entry entry)
+    public static FhirResponse WithEntry(
+        HttpStatusCode code,
+        Entry entry,
+        ReturnPreference returnPreference = ReturnPreference.Representation)
     {
 
-        return new FhirResponse(code, entry.Key, entry.Resource);
+        return new FhirResponse(code, entry.Key, entry.Resource, returnPreference);
     }
 
     public static FhirResponse WithBundle(Bundle bundle)

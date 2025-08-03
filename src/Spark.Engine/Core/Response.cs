@@ -6,7 +6,9 @@
  */
 
 using Hl7.Fhir.Model;
+using Hl7.Fhir.Rest;
 using Spark.Engine.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Net;
 
@@ -41,7 +43,10 @@ public abstract class FhirResponseBase
     }
 
     public HttpStatusCode StatusCode { get; protected init; }
+
     public IKey Key { get; protected init; }
+
+    public ReturnPreference ReturnPreference { get; protected init; } =  ReturnPreference.Representation;
 
     public bool IsValid
     {
@@ -64,12 +69,6 @@ public abstract class FhirResponseBase
 
 public class FhirResponse<T> : FhirResponseBase where T : Resource
 {
-    public T Resource
-    {
-        get => _resource as T;
-        private init => _resource = value;
-    }
-
     public FhirResponse(HttpStatusCode code, IKey key, T resource)
     {
         StatusCode = code;
@@ -88,28 +87,37 @@ public class FhirResponse<T> : FhirResponseBase where T : Resource
     {
         StatusCode = code;
     }
+
+    public T Resource
+    {
+        get => _resource as T;
+        private init => _resource = value;
+    }
 }
 
 public class FhirResponse : FhirResponseBase
 {
-    public Resource Resource
-    {
-        get => _resource;
-        private init => _resource = value;
-    }
-
-    public FhirResponse(HttpStatusCode code, IKey key, Resource resource)
+    public FhirResponse(
+        HttpStatusCode code,
+        IKey key,
+        Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         StatusCode = code;
         Key = key;
         Resource = resource;
+        ReturnPreference = returnPreference;
     }
 
-    public FhirResponse(HttpStatusCode code, Resource resource)
+    public FhirResponse(
+        HttpStatusCode code,
+        Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         StatusCode = code;
         Key = null;
         Resource = resource;
+        ReturnPreference = returnPreference;
     }
 
     public FhirResponse(HttpStatusCode code)
@@ -117,5 +125,34 @@ public class FhirResponse : FhirResponseBase
         StatusCode = code;
         Key = null;
         Resource = null;
+    }
+
+    public Resource Resource
+    {
+        get
+        {
+            if (_resource == null)
+                return null;
+
+            return ReturnPreference switch
+            {
+                ReturnPreference.Representation => _resource,
+                ReturnPreference.Minimal => null,
+                ReturnPreference.OperationOutcome => new OperationOutcome
+                {
+                    Issue =
+                    [
+                        new OperationOutcome.IssueComponent
+                        {
+                            Severity = OperationOutcome.IssueSeverity.Information,
+                            Code = OperationOutcome.IssueType.Informational,
+                            Diagnostics = BuildDiagnosticText(StatusCode, Key)
+                        }
+                    ]
+                },
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+        internal set => _resource = value;
     }
 }

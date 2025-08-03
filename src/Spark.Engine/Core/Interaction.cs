@@ -1,20 +1,24 @@
-﻿/* 
+﻿/*
  * Copyright (c) 2015-2018, Firely <info@fire.ly>
  * Copyright (c) 2021-2025, Incendi <info@incendi.no>
- * 
+ *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
 using Hl7.Fhir.Model;
-using System;
+using Hl7.Fhir.Rest;
 using Spark.Engine.Extensions;
+using System;
 
 namespace Spark.Engine.Core;
 
 public enum EntryState { Internal, Undefined, External }
 
-public class    Entry
+public class Entry
 {
+    private IKey _key;
+    private DateTimeOffset? _when;
+
     public IKey Key {
         get
         {
@@ -41,7 +45,9 @@ public class    Entry
     }
 
     public Resource Resource { get; set; }
+
     public Bundle.HTTPVerb Method { get; set; }
+
     // API: HttpVerb should not be in Bundle.
     public DateTimeOffset? When
     {
@@ -69,12 +75,13 @@ public class    Entry
             }
         }
     }
+
     public EntryState State { get; set; }
 
-    private IKey _key = null;
-    private DateTimeOffset? _when = null;
+    public ReturnPreference ReturnPreference { get; set; }
 
-    protected Entry(Bundle.HTTPVerb method, IKey key, DateTimeOffset? when, Resource resource)
+    protected Entry(Bundle.HTTPVerb method, IKey key, DateTimeOffset? when, Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         if (resource != null && !(method == Bundle.HTTPVerb.PATCH && resource is Parameters))
         {
@@ -85,6 +92,7 @@ public class    Entry
             Key = key;
         }
         Resource = resource;
+        ReturnPreference = returnPreference;
         Method = method;
         When = when ?? DateTimeOffset.Now;
         State = EntryState.Undefined;
@@ -97,30 +105,21 @@ public class    Entry
         State = EntryState.Undefined;
     }
 
-    public static Entry Create(Bundle.HTTPVerb method, Resource resource)
-    {
-        return new Entry(method, null, null, resource);
-    }
+    public static Entry Create(Bundle.HTTPVerb method, Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation) =>
+        new(method, null, null, resource, returnPreference);
 
-    public static Entry Create(Bundle.HTTPVerb method, IKey key)
-    {
-        return new Entry(method, key, null, null);
-    }
+    public static Entry Create(Bundle.HTTPVerb method, IKey key,
+        ReturnPreference returnPreference = ReturnPreference.Representation) =>
+        new(method, key, null, null, returnPreference);
 
-    public static Entry Create(Bundle.HTTPVerb method, IKey key, Resource resource)
-    {
-        return new Entry(method, key, null, resource);
-    }
+    public static Entry Create(Bundle.HTTPVerb method, IKey key, Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation) =>
+        new(method, key, null, resource, returnPreference);
 
-    public static Entry Create(IKey key, Resource resource)
-    {
-        return new Entry(key, resource);
-    }
-
-    public static Entry Create(Bundle.HTTPVerb method, IKey key, DateTimeOffset when)
-    {
-        return new Entry(method, key, when, null);
-    }
+    public static Entry Create(Bundle.HTTPVerb method, IKey key, DateTimeOffset when,
+        ReturnPreference returnPreference = ReturnPreference.Representation) =>
+        new(method, key, when, null, returnPreference);
 
     /// <summary>
     ///  Creates a deleted entry
@@ -151,28 +150,25 @@ public class    Entry
         }
     }
 
-    public static Entry POST(IKey key, Resource resource)
-    {
-        return Create(Bundle.HTTPVerb.POST, key, resource);
-    }
+    public static Entry POST(
+        IKey key,
+        Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation) =>
+        Create(Bundle.HTTPVerb.POST, key, resource, returnPreference);
 
-    public static Entry POST(Resource resource)
-    {
-        return Create(Bundle.HTTPVerb.POST, resource);
-    }
+    public static Entry POST(Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation) => Create(Bundle.HTTPVerb.POST, resource, returnPreference);
 
-    public static Entry PUT(IKey key, Resource resource)
-    {
-        return Create(Bundle.HTTPVerb.PUT, key, resource);
-    }
+    public static Entry PUT(
+        IKey key,
+        Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation) =>
+        Create(Bundle.HTTPVerb.PUT, key, resource, returnPreference);
 
-    public static Entry PATCH(IKey key, Resource resource)
-    {
-        return Create(Bundle.HTTPVerb.PATCH, key, resource);
-    }
+    public static Entry PATCH(
+        IKey key,
+        Resource resource,
+        ReturnPreference returnPreference = ReturnPreference.Representation) =>
+        Create(Bundle.HTTPVerb.PATCH, key, resource, returnPreference);
 
-    public override string ToString()
-    {
-        return string.Format("{0} {1}", Method, Key);
-    }
+    public override string ToString() => $"{Method} {Key}";
 }
