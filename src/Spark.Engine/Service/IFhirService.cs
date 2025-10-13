@@ -17,19 +17,19 @@ namespace Spark.Engine.Service;
 public interface IFhirService
 {
     Task<FhirResponse> AddMetaAsync(IKey key, Parameters parameters);
-    Task<FhirResponse> ConditionalCreateAsync(IKey key, Resource resource, IEnumerable<Tuple<string, string>> parameters);
-    Task<FhirResponse> ConditionalCreateAsync(IKey key, Resource resource, SearchParams parameters);
+    Task<FhirResponse> ConditionalCreateAsync(IKey key, Resource resource, IEnumerable<Tuple<string, string>> parameters, ReturnPreference returnPreference = ReturnPreference.Representation);
+    Task<FhirResponse> ConditionalCreateAsync(IKey key, Resource resource, SearchParams parameters, ReturnPreference returnPreference = ReturnPreference.Representation);
     Task<FhirResponse> ConditionalDeleteAsync(IKey key, IEnumerable<Tuple<string, string>> parameters);
-    Task<FhirResponse> ConditionalUpdateAsync(IKey key, Resource resource, SearchParams parameters);
+    Task<FhirResponse> ConditionalUpdateAsync(IKey key, Resource resource, SearchParams parameters, ReturnPreference returnPreference = ReturnPreference.Representation);
     Task<FhirResponse> CapabilityStatementAsync(string sparkVersion);
-    Task<FhirResponse> CreateAsync(IKey key, Resource resource);
+    Task<FhirResponse> CreateAsync(IKey key, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation);
     Task<FhirResponse> DeleteAsync(IKey key);
     Task<FhirResponse> DeleteAsync(Entry entry);
     Task<FhirResponse> GetPageAsync(string snapshotKey, int index);
     Task<FhirResponse> HistoryAsync(HistoryParameters parameters);
     Task<FhirResponse> HistoryAsync(string type, HistoryParameters parameters);
     Task<FhirResponse> HistoryAsync(IKey key, HistoryParameters parameters);
-    Task<FhirResponse> PutAsync(IKey key, Resource resource);
+    Task<FhirResponse> PutAsync(IKey key, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation);
     Task<FhirResponse> PutAsync(Entry entry);
     Task<FhirResponse<T>> ReadAsync<T>(IKey key, ConditionalHeaderParameters parameters = null) where T : Resource;
     Task<FhirResponse> ReadAsync(IKey key, ConditionalHeaderParameters parameters = null);
@@ -37,8 +37,8 @@ public interface IFhirService
     Task<FhirResponse> SearchAsync(string type, SearchParams searchCommand, int pageIndex = 0);
     Task<FhirResponse> TransactionAsync(IList<Entry> interactions);
     Task<FhirResponse> TransactionAsync(Bundle bundle);
-    Task<FhirResponse> UpdateAsync(IKey key, Resource resource);
-    Task<FhirResponse> PatchAsync(IKey key, Parameters patch);
+    Task<FhirResponse> UpdateAsync(IKey key, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation);
+    Task<FhirResponse> PatchAsync(IKey key, Parameters patch, ReturnPreference returnPreference = ReturnPreference.Representation);
     Task<FhirResponse> ValidateOperationAsync(IKey key, Resource resource);
     Task<FhirResponse<T>> VersionReadAsync<T>(IKey key) where T : Resource;
     Task<FhirResponse> VersionReadAsync(IKey key);

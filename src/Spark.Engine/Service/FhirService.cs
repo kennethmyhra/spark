@@ -44,12 +44,12 @@ public class FhirService : FhirServiceBase, IInteractionHandler
         return _responseFactory.GetMetadataResponse(entry, key);
     }
 
-    public override Task<FhirResponse> ConditionalCreateAsync(IKey key, Resource resource, IEnumerable<Tuple<string, string>> parameters)
+    public override Task<FhirResponse> ConditionalCreateAsync(IKey key, Resource resource, IEnumerable<Tuple<string, string>> parameters, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
-        return ConditionalCreateAsync(key, resource, SearchParams.FromUriParamList(parameters));
+        return ConditionalCreateAsync(key, resource, SearchParams.FromUriParamList(parameters), returnPreference);
     }
 
-    public override async Task<FhirResponse> ConditionalCreateAsync(IKey key, Resource resource, SearchParams parameters)
+    public override async Task<FhirResponse> ConditionalCreateAsync(IKey key, Resource resource, SearchParams parameters, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         var searchStore = GetFeature<ISearchService>();
         var transactionService = GetFeature<ITransactionService>();
@@ -66,7 +66,7 @@ public class FhirService : FhirServiceBase, IInteractionHandler
             .ConfigureAwait(false) ?? Respond.WithCode(HttpStatusCode.NotFound);
     }
 
-    public override async Task<FhirResponse> ConditionalUpdateAsync(IKey key, Resource resource, SearchParams parameters)
+    public override async Task<FhirResponse> ConditionalUpdateAsync(IKey key, Resource resource, SearchParams parameters, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         var searchStore = GetFeature<ISearchService>();
         var transactionService = GetFeature<ITransactionService>();
@@ -84,7 +84,7 @@ public class FhirService : FhirServiceBase, IInteractionHandler
         return Task.FromResult(response);
     }
 
-    public override async Task<FhirResponse> CreateAsync(IKey key, Resource resource)
+    public override async Task<FhirResponse> CreateAsync(IKey key, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         Validate.Key(key);
         Validate.HasTypeName(key);
@@ -150,7 +150,7 @@ public class FhirService : FhirServiceBase, IInteractionHandler
         return await CreateSnapshotResponseAsync(snapshot).ConfigureAwait(false);
     }
 
-    public override Task<FhirResponse> PutAsync(IKey key, Resource resource)
+    public override Task<FhirResponse> PutAsync(IKey key, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         Validate.HasResourceId(resource);
         Validate.IsResourceIdEqual(key, resource);
@@ -212,14 +212,14 @@ public class FhirService : FhirServiceBase, IInteractionHandler
         return _responseFactory.GetFhirResponse(responses, Bundle.BundleType.TransactionResponse);
     }
 
-    public override async Task<FhirResponse> UpdateAsync(IKey key, Resource resource)
+    public override async Task<FhirResponse> UpdateAsync(IKey key, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         return key.HasVersionId()
             ? await VersionSpecificUpdateAsync(key, resource).ConfigureAwait(false)
             : await PutAsync(key, resource).ConfigureAwait(false);
     }
 
-    public override async Task<FhirResponse> PatchAsync(IKey key, Parameters parameters)
+    public override async Task<FhirResponse> PatchAsync(IKey key, Parameters parameters, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         if (parameters == null)
         {
