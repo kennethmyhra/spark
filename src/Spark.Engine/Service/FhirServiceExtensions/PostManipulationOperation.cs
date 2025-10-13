@@ -19,8 +19,8 @@ public static partial class ResourceManipulationOperationFactory
 {
     private class PostManipulationOperation : ResourceManipulationOperation
     {
-        public PostManipulationOperation(Resource resource, IKey operationKey, SearchResults searchResults, SearchParams searchCommand = null)
-            : base(resource, operationKey, searchResults, searchCommand)
+        public PostManipulationOperation(Resource resource, IKey operationKey, SearchResults searchResults, SearchParams searchCommand = null, ReturnPreference returnPreference = ReturnPreference.Representation)
+            : base(resource, operationKey, searchResults, searchCommand, returnPreference)
         {
         }
 
@@ -35,24 +35,22 @@ public static partial class ResourceManipulationOperationFactory
 
         protected override IEnumerable<Entry> ComputeEntries()
         {
-            Entry postEntry = null;
+            Entry entry = null;
             if (SearchResults != null)
             {
                 if (SearchResults.Count > 1)
-                    throw new SparkException(HttpStatusCode.PreconditionFailed, 
-                        string.Format( "Multiple matches found when trying to resolve conditional create. Client's criteria were not selective enough.{0}", 
-                            GetSearchInformation()));
+                    throw new SparkException(HttpStatusCode.PreconditionFailed,
+                        $"Multiple matches found when trying to resolve conditional create. Client's criteria were not selective enough.{GetSearchInformation()}");
                 string localKeyValue = SearchResults.SingleOrDefault();
                 //throw exception. probably we should manually throw this in order to add fhir specific details
                 if (string.IsNullOrEmpty(localKeyValue) == false)
                 {
-                    Key localKey = Core.Key.ParseOperationPath(localKeyValue);
-                    postEntry = Entry.Create(Bundle.HTTPVerb.GET, localKey, null);
+                    Key localKey = Key.ParseOperationPath(localKeyValue);
+                    entry = Entry.Create(Bundle.HTTPVerb.GET, localKey, null, ReturnPreference);
                 }
             }
-            postEntry = postEntry ?? Entry.POST(OperationKey, Resource);
 
-            yield return postEntry;
+            yield return entry ?? Entry.POST(OperationKey, Resource, ReturnPreference);;
         }
     }
 }

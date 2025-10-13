@@ -19,8 +19,8 @@ public static partial class ResourceManipulationOperationFactory
 {
     private class PutManipulationOperation : ResourceManipulationOperation
     {
-        public PutManipulationOperation(Resource resource, IKey operationKey, SearchResults searchResults, SearchParams searchCommand = null) 
-            : base(resource, operationKey, searchResults, searchCommand)
+        public PutManipulationOperation(Resource resource, IKey operationKey, SearchResults searchResults, SearchParams searchCommand = null, ReturnPreference returnPreference = ReturnPreference.Representation)
+            : base(resource, operationKey, searchResults, searchCommand, returnPreference)
         {
         }
 
@@ -45,16 +45,15 @@ public static partial class ResourceManipulationOperationFactory
                 {
                     IKey localKey = Key.ParseOperationPath(localKeyValue);
 
-                    entry = Entry.PUT(localKey, Resource); 
+                    entry = Entry.PUT(localKey, Resource, ReturnPreference);
                 }
                 else
                 {
-                    entry = Entry.POST(OperationKey, Resource);
+                    entry = Entry.POST(OperationKey, Resource, ReturnPreference);
                 }
             }
 
-            entry = entry ?? Entry.PUT(OperationKey, Resource);
-            yield return entry;
+            yield return entry ?? Entry.PUT(OperationKey, Resource, ReturnPreference);;
         }
     }
 }

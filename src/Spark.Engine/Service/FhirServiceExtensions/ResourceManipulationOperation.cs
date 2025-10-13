@@ -22,13 +22,15 @@ public abstract partial class ResourceManipulationOperation
     public IKey OperationKey { get; }
     public Resource Resource { get; }
     public SearchResults SearchResults { get; }
+    public ReturnPreference ReturnPreference { get; }
 
-    protected ResourceManipulationOperation(Resource resource, IKey operationKey, SearchResults searchResults, SearchParams searchCommand = null)
+    protected ResourceManipulationOperation(Resource resource, IKey operationKey, SearchResults searchResults, SearchParams searchCommand = null, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         _searchCommand = searchCommand;
         Resource = resource;
         OperationKey = operationKey;
         SearchResults = searchResults;
+        ReturnPreference = returnPreference;
     }
 
     public IEnumerable<Entry> GetEntries()

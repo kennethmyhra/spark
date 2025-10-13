@@ -19,8 +19,8 @@ public static partial class ResourceManipulationOperationFactory
 {
     public class PatchManipulationOperation : ResourceManipulationOperation
     {
-        public PatchManipulationOperation(Resource resource, IKey operationKey, SearchResults searchResults, SearchParams searchCommand = null) 
-            : base(resource, operationKey, searchResults, searchCommand)
+        public PatchManipulationOperation(Resource resource, IKey operationKey, SearchResults searchResults, SearchParams searchCommand = null, ReturnPreference returnPreference = ReturnPreference.Representation)
+            : base(resource, operationKey, searchResults, searchCommand, returnPreference)
         {
         }
             
@@ -47,15 +47,11 @@ public static partial class ResourceManipulationOperationFactory
                 var localKeyLiteral = SearchResults.SingleOrDefault();
                 if (!string.IsNullOrEmpty(localKeyLiteral))
                 {
-                    entry = Entry.PATCH(Key.ParseOperationPath(localKeyLiteral), Resource);
+                    entry = Entry.PATCH(Key.ParseOperationPath(localKeyLiteral), Resource, ReturnPreference);
                 }
             }
-            else
-            {
-                entry = Entry.PATCH(OperationKey, Resource);
-            }
 
-            yield return entry;
+            yield return entry ?? Entry.PATCH(OperationKey, Resource, ReturnPreference);;
         }
     }
 }
