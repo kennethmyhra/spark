@@ -73,7 +73,7 @@ public class FhirService : FhirServiceBase, IInteractionHandler
 
         // FIXME: if update receives a key with no version how do we handle concurrency?
 
-        var operation = await ResourceManipulationOperationFactory.CreatePutAsync(resource, key, searchStore, parameters).ConfigureAwait(false);
+        var operation = await ResourceManipulationOperationFactory.CreatePutAsync(resource, key, searchStore, parameters, returnPreference).ConfigureAwait(false);
         return await transactionService.HandleTransactionAsync(operation, this).ConfigureAwait(false);
     }
 
@@ -91,7 +91,7 @@ public class FhirService : FhirServiceBase, IInteractionHandler
         Validate.ResourceType(key, resource);
 
         key = key.CleanupForCreate();
-        var result = await StoreAsync(Entry.POST(key, resource)).ConfigureAwait(false);
+        var result = await StoreAsync(Entry.POST(key, resource, returnPreference)).ConfigureAwait(false);
         return Respond.WithResource(HttpStatusCode.Created, result);
     }
 
@@ -154,7 +154,7 @@ public class FhirService : FhirServiceBase, IInteractionHandler
     {
         Validate.HasResourceId(resource);
         Validate.IsResourceIdEqual(key, resource);
-        return PutAsync(Entry.PUT(key, resource));
+        return PutAsync(Entry.PUT(key, resource, returnPreference));
     }
 
     public override async Task<FhirResponse> PutAsync(Entry entry)
@@ -215,8 +215,8 @@ public class FhirService : FhirServiceBase, IInteractionHandler
     public override async Task<FhirResponse> UpdateAsync(IKey key, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         return key.HasVersionId()
-            ? await VersionSpecificUpdateAsync(key, resource).ConfigureAwait(false)
-            : await PutAsync(key, resource).ConfigureAwait(false);
+            ? await VersionSpecificUpdateAsync(key, resource, returnPreference).ConfigureAwait(false)
+            : await PutAsync(key, resource, returnPreference).ConfigureAwait(false);
     }
 
     public override async Task<FhirResponse> PatchAsync(IKey key, Parameters parameters, ReturnPreference returnPreference = ReturnPreference.Representation)
@@ -233,7 +233,7 @@ public class FhirService : FhirServiceBase, IInteractionHandler
             try
             {
                 var resource = patchService.Apply(current.Resource, parameters);
-                return await PatchAsync(Entry.PATCH(current.Key.WithoutVersion(), resource)).ConfigureAwait(false);
+                return await PatchAsync(Entry.PATCH(current.Key.WithoutVersion(), resource, returnPreference)).ConfigureAwait(false);
             }
             catch
             {
@@ -275,14 +275,14 @@ public class FhirService : FhirServiceBase, IInteractionHandler
         return _responseFactory.GetFhirResponse(entry, key);
     }
 
-    public override async Task<FhirResponse> VersionSpecificUpdateAsync(IKey versionedKey, Resource resource)
+    public override async Task<FhirResponse> VersionSpecificUpdateAsync(IKey versionedKey, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation)
     {
         Validate.HasTypeName(versionedKey);
         Validate.HasVersion(versionedKey);
         var key = versionedKey.WithoutVersion();
         var current = await GetFeature<IResourceStorageService>().GetAsync(key).ConfigureAwait(false);
         Validate.IsSameVersion(current.Key, versionedKey);
-        return await PutAsync(key, resource).ConfigureAwait(false);
+        return await PutAsync(key, resource, returnPreference).ConfigureAwait(false);
     }
 
     public override async Task<FhirResponse> EverythingAsync(IKey key)

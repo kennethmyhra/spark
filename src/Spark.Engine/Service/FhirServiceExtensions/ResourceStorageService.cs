@@ -50,6 +50,7 @@ public class ResourceStorageService : IResourceStorageService
         else
         {
             result = await _fhirStore.GetAsync(entry.Key).ConfigureAwait(false);
+            result.ReturnPreference = entry.ReturnPreference;
         }
         _transfer.Externalize(result);
 

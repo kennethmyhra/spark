@@ -90,7 +90,7 @@ public class FhirServiceBase : ExtendableWith<IFhirServiceExtension>, IFhirServi
     public virtual Task<FhirResponse> ValidateOperationAsync(IKey key, Resource resource) => throw new NotImplementedException();
     public virtual Task<FhirResponse<T>> VersionReadAsync<T>(IKey key) where T : Resource => throw new NotImplementedException();
     public virtual Task<FhirResponse> VersionReadAsync(IKey key) => throw new NotImplementedException();
-    public virtual Task<FhirResponse> VersionSpecificUpdateAsync(IKey versionedKey, Resource resource) => throw new NotImplementedException();
+    public virtual Task<FhirResponse> VersionSpecificUpdateAsync(IKey versionedKey, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation) => throw new NotImplementedException();
     public virtual Task<FhirResponse> EverythingAsync(IKey key) => throw new NotImplementedException();
     public virtual Task<FhirResponse> DocumentAsync(IKey key) => throw new NotImplementedException();
 }

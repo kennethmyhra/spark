@@ -111,12 +111,12 @@ public static class Respond
 
     public static FhirResponse WithResource(HttpStatusCode code, Entry entry)
     {
-        return new FhirResponse(code, entry.Key, entry.Resource);
+        return new FhirResponse(code, entry.Key, entry.Resource, entry.ReturnPreference);
     }
 
     public static FhirResponse WithResource(Entry entry)
     {
-        return new FhirResponse(HttpStatusCode.OK, entry.Key, entry.Resource);
+        return new FhirResponse(HttpStatusCode.OK, entry.Key, entry.Resource, entry.ReturnPreference);
     }
 
     public static FhirResponse NotFound(IKey key)

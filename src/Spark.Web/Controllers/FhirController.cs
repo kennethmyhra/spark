@@ -57,24 +57,23 @@ public class FhirController : ControllerBase
     {
         string versionId = Request.GetTypedHeaders().IfMatch?.FirstOrDefault()?.Tag.Buffer;
         Key key = Key.Create(type, id, versionId);
+        var prefer = Request.GetPreferHeaderValue();
         if (key.HasResourceId())
         {
             Request.TransferResourceIdIfRawBinary(resource, id);
 
-            return new ActionResult<FhirResponse>(await _fhirService.UpdateAsync(key, resource).ConfigureAwait(false));
+            return new ActionResult<FhirResponse>(await _fhirService.UpdateAsync(key, resource, prefer).ConfigureAwait(false));
         }
-        else
-        {
-            return new ActionResult<FhirResponse>(await _fhirService.ConditionalUpdateAsync(key, resource,
-                SearchParams.FromUriParamList(Request.TupledParameters())).ConfigureAwait(false));
-        }
+
+        return new ActionResult<FhirResponse>(await _fhirService.ConditionalUpdateAsync(key, resource,
+            SearchParams.FromUriParamList(Request.TupledParameters()), prefer).ConfigureAwait(false));
     }
 
     [HttpPost("{type}")]
     public async Task<FhirResponse> Create(string type, Resource resource)
     {
         Key key = Key.Create(type, resource?.Id);
-
+        var prefer = Request.GetPreferHeaderValue();
         if (Request.Headers.ContainsKey(FhirHttpHeaders.IfNoneExist))
         {
             NameValueCollection searchQueryString = HttpUtility.ParseQueryString(Request.GetTypedHeaders().IfNoneExist());
@@ -82,10 +81,10 @@ public class FhirController : ControllerBase
                 searchQueryString.Keys.Cast<string>()
                     .Select(k => new Tuple<string, string>(k, searchQueryString[k]));
 
-            return await _fhirService.ConditionalCreateAsync(key, resource, SearchParams.FromUriParamList(searchValues)).ConfigureAwait(false);
+            return await _fhirService.ConditionalCreateAsync(key, resource, SearchParams.FromUriParamList(searchValues), prefer).ConfigureAwait(false);
         }
 
-        return await _fhirService.CreateAsync(key, resource).ConfigureAwait(false);
+        return await _fhirService.CreateAsync(key, resource, prefer).ConfigureAwait(false);
     }
 
     [HttpPatch("{type}/{id}")]
@@ -93,7 +92,8 @@ public class FhirController : ControllerBase
     {
         // TODO: conditional PATCH support (http://www.hl7.org/fhir/R4/http.html#concurrency)
         var key = Key.Create(type, id, Request.IfMatchVersionId());
-        return await _fhirService.PatchAsync(key, patch).ConfigureAwait(false);
+        var prefer = Request.GetPreferHeaderValue();
+        return await _fhirService.PatchAsync(key, patch, prefer).ConfigureAwait(false);
     }
 
     [HttpDelete("{type}/{id}")]

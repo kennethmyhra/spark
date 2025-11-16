@@ -42,7 +42,7 @@ public interface IFhirService
     Task<FhirResponse> ValidateOperationAsync(IKey key, Resource resource);
     Task<FhirResponse<T>> VersionReadAsync<T>(IKey key) where T : Resource;
     Task<FhirResponse> VersionReadAsync(IKey key);
-    Task<FhirResponse> VersionSpecificUpdateAsync(IKey versionedKey, Resource resource);
+    Task<FhirResponse> VersionSpecificUpdateAsync(IKey versionedKey, Resource resource, ReturnPreference returnPreference = ReturnPreference.Representation);
     Task<FhirResponse> EverythingAsync(IKey key);
     Task<FhirResponse> DocumentAsync(IKey key);
 }
