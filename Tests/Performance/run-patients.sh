@@ -36,7 +36,8 @@ stop_spark
 docker rm -f perf-pg perf-mongo >/dev/null 2>&1 || true
 
 if [ "$STORE" = mongo ]; then
-  docker run -d --name perf-mongo --cpus=4 --memory=4g -p 57017:27017 mongo:8 >/dev/null
+  # Work around https://jira.mongodb.org/browse/SERVER-121912 on affected Linux kernels.
+  docker run -d --name perf-mongo --cpus=4 --memory=4g -p 57017:27017 -e GLIBC_TUNABLES=glibc.pthread.rseq=1 mongo:8 >/dev/null
   until docker exec perf-mongo mongosh --quiet --eval 'db.runCommand({ping:1}).ok' 2>/dev/null | grep -q 1; do sleep 2; done
   # The indexes Spark ships with (see MongoStoreAdministration.EnsureIndicesAsync), plus two that the write path
   # needs: without them every update scans the resources collection.
@@ -49,16 +50,21 @@ if [ "$STORE" = mongo ]; then
     db.searchindex.createIndex({"internal_id":1},{unique:true,sparse:true});
     // Spark ships no indexes on the search fields, so every search scans the whole searchindex collection.
     // These cover the searches this test runs, the way a tuned deployment would index for its own queries.
-    db.searchindex.createIndex({"internal_resource":1,"identifier.code":1});
-    db.searchindex.createIndex({"internal_resource":1,"fhir_id.code":1});
-    db.searchindex.createIndex({"internal_resource":1,"family":1});
-    db.searchindex.createIndex({"internal_resource":1,"given":1});
-    db.searchindex.createIndex({"internal_resource":1,"birthdate.start":1});
-    db.searchindex.createIndex({"internal_resource":1,"gender.code":1});
-    db.searchindex.createIndex({"internal_resource":1,"code.code":1});
-    db.searchindex.createIndex({"internal_resource":1,"subject":1});
-    db.searchindex.createIndex({"internal_resource":1,"value-quantity.value":1});
-    db.searchindex.createIndex({"internal_resource":1,"date.start":1});' >/dev/null
+    // Token and quantity values are arrays searched with $elemMatch, so code and system, or unit and value, of the
+    // same value share one index. Two such fields cannot share an index, as MongoDB does not index parallel arrays.
+    // The search field comes first: every search filters on internal_resource, so an index that starts with it is a
+    // candidate for every search, and the planner then often picks an index on a field the search does not use.
+    // Dates index both start and end, so that the overlap test on a period is checked in the index.
+    db.searchindex.createIndex({"identifier.code":1,"identifier.system":1,"internal_resource":1});
+    db.searchindex.createIndex({"fhir_id.code":1,"internal_resource":1});
+    db.searchindex.createIndex({"family":1,"internal_resource":1});
+    db.searchindex.createIndex({"given":1,"internal_resource":1});
+    db.searchindex.createIndex({"birthdate.start":1,"birthdate.end":1,"internal_resource":1});
+    db.searchindex.createIndex({"gender.code":1,"internal_resource":1});
+    db.searchindex.createIndex({"code.code":1,"code.system":1,"internal_resource":1});
+    db.searchindex.createIndex({"subject":1,"internal_resource":1});
+    db.searchindex.createIndex({"value-quantity.unit":1,"value-quantity.value":1,"internal_resource":1});
+    db.searchindex.createIndex({"date.start":1,"date.end":1,"internal_resource":1});' >/dev/null
   PROVIDER=MongoDB
   CONNECTION='mongodb://localhost:57017/spark'
 elif [ "$STORE" = postgres ]; then
